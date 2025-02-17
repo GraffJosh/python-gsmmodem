@@ -1006,8 +1006,15 @@ class GsmModem(SerialComms):
         if cdsiMatch:
             msgMemory = cdsiMatch.group(1)
             msgIndex = cdsiMatch.group(2)
-            report = self.readStoredSms(msgIndex, msgMemory)
-            self.deleteStoredSms(msgIndex)
+            try:
+                report = self.readStoredSms(msgIndex, msgMemory)
+            except:
+                #This handles an intermittent issue where the modem responds with a non-response like object.
+                self.log.error('Error during processing of SMS Status Report')
+            finally:
+                #It's probably best to delete the stored response since we couldn't process it effectively.
+                self.deleteStoredSms(msgIndex)
+                return
             # Update sent SMS status if possible            
             if report.reference in self.sentSms:                
                 self.sentSms[report.reference].report = report
